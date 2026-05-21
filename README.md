@@ -1,4 +1,6 @@
-# Helix Otel - Mining
+# TechDemo-ApexOnline
+
+Helix Otel - Mining Use case
 
 Podman-based OpenTelemetry demo for mining-industry IT operations, designed for Helix AIOps.
 
