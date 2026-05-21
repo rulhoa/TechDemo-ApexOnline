@@ -1,0 +1,10 @@
+[
+  {"id": 1, "name": "db_pool_exhaustion", "service": "ops-db", "symptom": "dispatch latency and 5xx spike"},
+  {"id": 2, "name": "slow_haul_tracking", "service": "fleet-telemetry-service", "symptom": "timeout cascade"},
+  {"id": 3, "name": "broker_backlog", "service": "message-broker", "symptom": "ingestion delay"},
+  {"id": 4, "name": "maintenance_memory_pressure", "service": "maintenance-workorder-service", "symptom": "slow maintenance API"},
+  {"id": 5, "name": "worker_cpu_saturation", "service": "ingestion-worker", "symptom": "report lag"},
+  {"id": 6, "name": "connector_token_expiry", "service": "maintenance-workorder-service", "symptom": "auth failures"},
+  {"id": 7, "name": "db_disk_io_throttle", "service": "ops-db", "symptom": "write latency"},
+  {"id": 8, "name": "dns_intermittency", "service": "tier2_services", "symptom": "remote endpoint flaps"}
+]

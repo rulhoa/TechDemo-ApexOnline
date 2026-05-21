@@ -1,0 +1,113 @@
+version: "3.9"
+
+services:
+  otel-collector:
+    image: docker.io/otel/opentelemetry-collector-contrib:0.99.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    restart: always
+
+  ops-db:
+    image: docker.io/library/postgres:16
+    environment:
+      POSTGRES_DB: mining
+      POSTGRES_USER: mining
+      POSTGRES_PASSWORD: mining
+    ports:
+      - "5432:5432"
+    restart: always
+
+  message-broker:
+    image: docker.io/library/redis:7
+    ports:
+      - "6379:6379"
+    restart: always
+
+  fleet-telemetry-service:
+    build: ./services/fleet-telemetry-service
+    environment:
+      SERVICE_NAME: fleet-telemetry-service
+      OTEL_SERVICE_NAME: fleet-telemetry-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      STATE_FILE_PATH: /shared/state/current.json
+      PORT: 3001
+    volumes:
+      - scenario_state:/shared/state
+    depends_on:
+      - otel-collector
+    restart: always
+
+  maintenance-workorder-service:
+    build: ./services/maintenance-workorder-service
+    environment:
+      SERVICE_NAME: maintenance-workorder-service
+      OTEL_SERVICE_NAME: maintenance-workorder-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      STATE_FILE_PATH: /shared/state/current.json
+      PORT: 3002
+    volumes:
+      - scenario_state:/shared/state
+    depends_on:
+      - otel-collector
+    restart: always
+
+  mine-ops-api:
+    build: ./services/mine-ops-api
+    environment:
+      SERVICE_NAME: mine-ops-api
+      OTEL_SERVICE_NAME: mine-ops-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      STATE_FILE_PATH: /shared/state/current.json
+      FLEET_URL: http://fleet-telemetry-service:3001
+      MAINT_URL: http://maintenance-workorder-service:3002
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - scenario_state:/shared/state
+    depends_on:
+      - fleet-telemetry-service
+      - maintenance-workorder-service
+      - otel-collector
+    restart: always
+
+  ingestion-worker:
+    build: ./services/ingestion-worker
+    environment:
+      SERVICE_NAME: ingestion-worker
+      OTEL_SERVICE_NAME: ingestion-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      STATE_FILE_PATH: /shared/state/current.json
+      DATABASE_URL: postgres://mining:mining@ops-db:5432/mining
+      REDIS_URL: redis://message-broker:6379
+    volumes:
+      - scenario_state:/shared/state
+    depends_on:
+      - ops-db
+      - message-broker
+      - otel-collector
+    restart: always
+
+  failure-orchestrator:
+    build: ./orchestrator
+    environment:
+      STATE_FILE_PATH: /shared/state/current.json
+      FAILURES_FILE_PATH: /app/profiles/failures.json
+      MINUTES_PER_HOUR: 60
+      TZ: UTC
+      # Optional: pin a scenario (0–7) and phase for demos. Unset for 24h automatic cycle.
+      DEMO_SCENARIO_INDEX: "${DEMO_SCENARIO_INDEX}"
+      DEMO_SCENARIO_PHASE: "${DEMO_SCENARIO_PHASE}"
+    volumes:
+      - scenario_state:/shared/state
+      - ./profiles:/app/profiles:ro
+    depends_on:
+      - mine-ops-api
+    restart: always
+
+volumes:
+  scenario_state:

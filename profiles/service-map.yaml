@@ -1,0 +1,25 @@
+services:
+  - name: mine-ops-api
+    tier: tier1
+    business_service: mine_operations
+    criticality: high
+  - name: fleet-telemetry-service
+    tier: tier2
+    business_service: fleet_tracking
+    criticality: high
+  - name: maintenance-workorder-service
+    tier: tier2
+    business_service: maintenance_planning
+    criticality: high
+  - name: ingestion-worker
+    tier: tier3
+    business_service: telemetry_pipeline
+    criticality: medium
+  - name: message-broker
+    tier: tier3
+    business_service: async_backbone
+    criticality: medium
+  - name: ops-db
+    tier: tier3
+    business_service: operations_persistence
+    criticality: high

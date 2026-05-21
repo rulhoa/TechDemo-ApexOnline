@@ -1,0 +1,9 @@
+{
+  "name": "failure-orchestrator",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "scheduler.js",
+  "scripts": {
+    "start": "node scheduler.js"
+  }
+}
