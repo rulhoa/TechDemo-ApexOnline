@@ -1,6 +1,6 @@
 name: Phase 2 - Build Docker Image
 
-on: [pull_request_target, issues]
+on: [workflow_dispatch]
 
 jobs:
 
